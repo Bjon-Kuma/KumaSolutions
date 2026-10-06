@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata(): Promise<Metadata> {
   const headersList = headers()
-  const host = headersList.get('x-forwarded-host') || process.env.NEXTAUTH_URL || 'https://kuma.digital'
+  const host = headersList.get('x-forwarded-host') || process.env.SITE_URL || 'https://kuma.digital'
   const baseUrl = host.startsWith('http') ? host : `https://${host}`
 
   return {
@@ -47,9 +47,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <head>
-        <script src="https://apps.abacus.ai/chatllm/appllm-lib.js"></script>
-      </head>
       <body className="bg-kuma-dark min-h-screen">
         <Header />
         <main>{children}</main>

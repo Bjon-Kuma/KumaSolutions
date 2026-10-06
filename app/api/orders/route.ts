@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server'
+import nodemailer from 'nodemailer'
 import { prisma } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
+
+function escapeHtml(value: unknown) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
 
 export async function POST(request: Request) {
   try {
@@ -53,19 +63,11 @@ export async function POST(request: Request) {
       },
     })
 
-    // Determine notification ID based on store
-    let notificationId = ''
-    if (storeSlug === 'envases-del-puerto') {
-      notificationId = process.env.NOTIF_ID_PEDIDO_DEMO_ENVASES_DEL_PUERTO ?? ''
-    } else if (storeSlug === 'reposteria-centro') {
-      notificationId = process.env.NOTIF_ID_PEDIDO_DEMO_REPOSTERA_CENTRO ?? ''
-    }
-
-    // Send email notification
-    if (notificationId) {
-      const itemsHtml = order?.items?.map?.((item: { product: { name: string }; quantity: number; price: number }) => 
+    // Send email notification (only when SMTP is configured)
+    if (process.env.SMTP_HOST) {
+      const itemsHtml = order?.items?.map?.((item: { product: { name: string }; quantity: number; price: number }) =>
         `<tr>
-          <td style="padding: 10px; border-bottom: 1px solid #eee;">${item?.product?.name ?? ''}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${escapeHtml(item?.product?.name)}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item?.quantity ?? 0}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${(item?.price ?? 0)?.toFixed?.(0)}</td>
         </tr>`
@@ -74,13 +76,13 @@ export async function POST(request: Request) {
       const htmlBody = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #845ec2; border-bottom: 2px solid #845ec2; padding-bottom: 10px;">
-            Nuevo Pedido - ${store?.name ?? ''}
+            Nuevo Pedido - ${escapeHtml(store?.name)}
           </h2>
           <div style="background: #fbeaff; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="margin: 0 0 15px 0;">Datos del cliente:</h3>
-            <p style="margin: 5px 0;"><strong>Nombre:</strong> ${customerName ?? ''}</p>
-            <p style="margin: 5px 0;"><strong>Teléfono:</strong> <a href="https://wa.me/${String(customerPhone ?? '')?.replace?.(/\D/g, '')}">${customerPhone ?? ''}</a></p>
-            ${customerEmail ? `<p style="margin: 5px 0;"><strong>Email:</strong> <a href="mailto:${customerEmail}">${customerEmail}</a></p>` : ''}
+            <p style="margin: 5px 0;"><strong>Nombre:</strong> ${escapeHtml(customerName)}</p>
+            <p style="margin: 5px 0;"><strong>Teléfono:</strong> <a href="https://wa.me/${String(customerPhone ?? '')?.replace?.(/\D/g, '')}">${escapeHtml(customerPhone)}</a></p>
+            ${customerEmail ? `<p style="margin: 5px 0;"><strong>Email:</strong> <a href="mailto:${escapeHtml(customerEmail)}">${escapeHtml(customerEmail)}</a></p>` : ''}
           </div>
           <h3>Productos:</h3>
           <table style="width: 100%; border-collapse: collapse;">
@@ -106,23 +108,23 @@ export async function POST(request: Request) {
       `
 
       try {
-        const appUrl = process.env.NEXTAUTH_URL ?? ''
-        const appName = appUrl ? new URL(appUrl)?.hostname?.split?.('.')?.[0] ?? 'Kuma' : 'Kuma'
+        const port = Number(process.env.SMTP_PORT ?? 465)
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port,
+          secure: port === 465,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        })
 
-        await fetch('https://apps.abacus.ai/api/sendNotificationEmail', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            deployment_token: process.env.ABACUSAI_API_KEY ?? '',
-            app_id: process.env.WEB_APP_ID ?? '',
-            notification_id: notificationId,
-            subject: `Nuevo Pedido - ${store?.name ?? ''} - ${customerName ?? ''}`,
-            body: htmlBody,
-            is_html: true,
-            recipient_email: 'buschiazzomaximiliano3@gmail.com',
-            sender_email: appUrl ? `noreply@${new URL(appUrl)?.hostname ?? 'kuma.digital'}` : 'noreply@kuma.digital',
-            sender_alias: appName,
-          }),
+        await transporter.sendMail({
+          from: `"KUMA Solutions" <${process.env.SMTP_USER}>`,
+          to: process.env.ORDER_NOTIFY_EMAIL || process.env.SMTP_USER,
+          replyTo: customerEmail || undefined,
+          subject: `Nuevo Pedido - ${store?.name ?? ''} - ${customerName ?? ''}`,
+          html: htmlBody,
         })
       } catch (emailError) {
         console.error('Error sending email notification:', emailError)
