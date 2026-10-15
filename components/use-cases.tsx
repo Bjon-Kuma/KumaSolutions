@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Clock3, Scissors, PawPrint, Wrench, UtensilsCrossed, Scale, Shirt } from 'lucide-react';
+import { ArrowRight, Clock3, Scissors, PawPrint, Wrench, UtensilsCrossed, Scale, Shirt } from 'lucide-react';
 
 const cases = [
   {
@@ -10,6 +11,7 @@ const cases = [
     problem: 'El control de entradas y salidas se llevaba de forma manual, dificultando el seguimiento de los horarios.',
     solution: 'Un sistema centralizado para registrar horarios y consultar la información de forma clara.',
     featured: true,
+    href: '/ControlHorario',
   },
   {
     icon: Scissors,
@@ -95,6 +97,15 @@ export function UseCases() {
               <p className="text-sm text-kuma-text-dim leading-relaxed">
                 <span className="text-kuma-gold font-semibold">Solución implementada:</span> {c.solution}
               </p>
+              {c.href && (
+                <Link
+                  href={c.href}
+                  className="inline-flex items-center gap-1.5 mt-4 text-sm font-semibold text-kuma-gold hover:text-kuma-gold-light transition-colors"
+                >
+                  Ver Control Horario
+                  <ArrowRight size={15} />
+                </Link>
+              )}
             </motion.div>
           ))}
         </div>

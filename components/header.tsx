@@ -3,11 +3,23 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, X, ArrowRight } from 'lucide-react'
+import { Menu, X, ArrowRight, ChevronDown, Clock3 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const navItems = [
+const products = [
+  {
+    name: 'Control Horario',
+    href: '/ControlHorario',
+    description: 'Fichaje con QR, portal del mánager y tótem',
+    icon: Clock3,
+  },
+]
+
+type NavItem = { name: string; href: string; children?: typeof products }
+
+const navItems: NavItem[] = [
   { name: 'Soluciones', href: '/#soluciones' },
+  { name: 'Productos', href: '/ControlHorario', children: products },
   { name: 'Trabajos', href: '/#trabajos' },
   { name: 'Casos', href: '/#casos' },
   { name: 'Planes', href: '/#planes' },
@@ -59,15 +71,46 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            {navItems?.map?.((item) => (
-              <Link
-                key={item?.name ?? ''}
-                href={item?.href ?? '/'}
-                className="text-kuma-text-dim hover:text-kuma-white transition-colors font-medium text-sm"
-              >
-                {item?.name ?? ''}
-              </Link>
-            )) ?? []}
+            {navItems?.map?.((item) =>
+              item.children ? (
+                <div key={item.name} className="relative group">
+                  <Link
+                    href={item.href}
+                    className="inline-flex items-center gap-1 text-kuma-text-dim hover:text-kuma-white group-focus-within:text-kuma-white transition-colors font-medium text-sm"
+                  >
+                    {item.name}
+                    <ChevronDown size={14} className="transition-transform group-hover:rotate-180" />
+                  </Link>
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all">
+                    <div className="w-72 bg-kuma-dark-card border border-kuma-border rounded-2xl p-2 shadow-soft-lg">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className="flex items-start gap-3 p-3 rounded-xl hover:bg-kuma-dark-surface transition-colors"
+                        >
+                          <span className="w-9 h-9 rounded-lg bg-kuma-gold/10 flex items-center justify-center flex-shrink-0">
+                            <child.icon size={18} className="text-kuma-gold" />
+                          </span>
+                          <span>
+                            <span className="block text-sm font-semibold text-kuma-white">{child.name}</span>
+                            <span className="block text-xs text-kuma-text-dim mt-0.5">{child.description}</span>
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  key={item?.name ?? ''}
+                  href={item?.href ?? '/'}
+                  className="text-kuma-text-dim hover:text-kuma-white transition-colors font-medium text-sm"
+                >
+                  {item?.name ?? ''}
+                </Link>
+              )
+            ) ?? []}
             <a
               href="https://wa.me/59892773422?text=Hola%21%20Quiero%20agendar%20una%20evaluaci%C3%B3n%20de%20negocio"
               target="_blank"
@@ -100,16 +143,35 @@ export default function Header() {
             className="md:hidden bg-kuma-dark-card border-t border-kuma-border"
           >
             <nav className="flex flex-col px-4 py-4 space-y-2">
-              {navItems?.map?.((item) => (
-                <Link
-                  key={item?.name ?? ''}
-                  href={item?.href ?? '/'}
-                  onClick={() => setIsOpen(false)}
-                  className="text-kuma-text-dim hover:text-kuma-white hover:bg-kuma-dark-surface transition-colors font-medium py-3 px-3 rounded-lg"
-                >
-                  {item?.name ?? ''}
-                </Link>
-              )) ?? []}
+              {navItems?.map?.((item) =>
+                item.children ? (
+                  <div key={item.name} className="py-1">
+                    <span className="block text-[11px] font-semibold uppercase tracking-widest text-kuma-gold px-3 pt-2 pb-1">
+                      {item.name}
+                    </span>
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 text-kuma-text-dim hover:text-kuma-white hover:bg-kuma-dark-surface transition-colors font-medium py-3 px-3 rounded-lg"
+                      >
+                        <child.icon size={18} className="text-kuma-gold" />
+                        {child.name}
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <Link
+                    key={item?.name ?? ''}
+                    href={item?.href ?? '/'}
+                    onClick={() => setIsOpen(false)}
+                    className="text-kuma-text-dim hover:text-kuma-white hover:bg-kuma-dark-surface transition-colors font-medium py-3 px-3 rounded-lg"
+                  >
+                    {item?.name ?? ''}
+                  </Link>
+                )
+              ) ?? []}
               <a
                 href="https://wa.me/59892773422?text=Hola%21%20Quiero%20agendar%20una%20evaluaci%C3%B3n%20de%20negocio"
                 target="_blank"

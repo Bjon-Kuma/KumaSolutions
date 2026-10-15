@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Hostinger también lo inyecta al compilar; permite desplegar por SSH el mismo formato.
+  output: 'standalone',
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
   eslint: {

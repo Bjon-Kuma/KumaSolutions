@@ -35,6 +35,11 @@ Ayudamos a las empresas a trabajar mejor: procesos más simples, mejor organizac
                 </Link>
               </li>
               <li>
+                <Link href="/ControlHorario" className="text-kuma-text-dim hover:text-kuma-gold transition-colors">
+                  Control Horario
+                </Link>
+              </li>
+              <li>
                 <Link href="/#trabajos" className="text-kuma-text-dim hover:text-kuma-gold transition-colors">
                   Trabajos
                 </Link>
